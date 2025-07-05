@@ -2,22 +2,32 @@ import { useEffect, useState } from "react";
 import { db } from "../services/firebase";
 import { collection, getDocs } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
+import Spinner from "../components/Spinner"; // <== импорт спиннера
 
 export default function Home() {
   const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true); // <== состояние загрузки
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPosts = async () => {
-      const querySnapshot = await getDocs(collection(db, "posts"));
-      const postList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setPosts(postList);
+      try {
+        const querySnapshot = await getDocs(collection(db, "posts"));
+        const postList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setPosts(postList);
+      } catch (err) {
+        console.error("Ошибка загрузки постов:", err);
+      } finally {
+        setLoading(false); // <== отключаем загрузку после запроса
+      }
     };
     fetchPosts();
   }, []);
+
+  if (loading) return <Spinner />; // <== пока загружается, показываем прелоадер
 
   return (
     <div className="row">
